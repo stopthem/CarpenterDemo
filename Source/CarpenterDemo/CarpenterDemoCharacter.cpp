@@ -10,14 +10,12 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Interfaces/InteractableInterface.h"
 #include "Item/Item.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ACarpenterDemoCharacter
-
-
 ACarpenterDemoCharacter::ACarpenterDemoCharacter()
 {
+	// Create the scene component that item pickup will attach.
 	ItemPickupAttachSceneComponent = CreateDefaultSubobject<USceneComponent>("ItemAttachSceneComponent");
 
 	// Set size for collision capsule
@@ -117,16 +115,13 @@ void ACarpenterDemoCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 
 	if (OtherActor == CurrentInteractableActor)
 	{
-		if (CurrentInteractableActor)
-		{
-			IInteractableInterface::Execute_OnInteractEnd(CurrentInteractableActor, this);
-		}
+		IInteractableInterface::Execute_OnInteractEnd(CurrentInteractableActor, this);
 
 		CurrentInteractableActor = nullptr;
 	}
 }
 
-AItem* ACarpenterDemoCharacter::GetCarriedItemToDeliver()
+AItem* ACarpenterDemoCharacter::DeliverItem()
 {
 	if (!CarriedItem)
 	{
@@ -138,11 +133,11 @@ AItem* ACarpenterDemoCharacter::GetCarriedItemToDeliver()
 	return Item;
 }
 
-void ACarpenterDemoCharacter::PickupItem(AActor* Item)
+void ACarpenterDemoCharacter::PickupItem(AItem* Item)
 {
 	Item->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
-	CarriedItem = Cast<AItem>(Item);
+	CarriedItem = Item;
 }
 
 void ACarpenterDemoCharacter::HandleRotationalInput(bool bEnable)

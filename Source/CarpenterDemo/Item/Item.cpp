@@ -4,10 +4,19 @@
 #include "Item.h"
 
 #include "CarpenterDemo/CarpenterDemoCharacter.h"
+#include "Components/SphereComponent.h"
 
 AItem::AItem()
 {
+	SceneComponent = CreateDefaultSubobject<USceneComponent>("SceneComponent");
+	SetRootComponent(SceneComponent);
+
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
+	StaticMeshComponent->SetupAttachment(SceneComponent);
+
+	SphereComponent = CreateDefaultSubobject<USphereComponent>("InteractionSphereComponent");
+	SphereComponent->InitSphereRadius(100.0f);
+	SphereComponent->SetupAttachment(SceneComponent);
 }
 
 void AItem::BeginPlay()
@@ -47,8 +56,8 @@ void AItem::OnInteract_Implementation(AActor* Interactor)
 	}
 
 	Cast<ACarpenterDemoCharacter>(Interactor)->PickupItem(this);
-	
+
 	OnPickedUp.Broadcast();
-	
+
 	bPickedUp = true;
 }

@@ -16,7 +16,7 @@ class ACarpenterDemoCharacter : public ACharacter
 
 protected:
 	virtual void BeginPlay() override;
-	
+
 public:
 	UFUNCTION(BlueprintCallable)
 	APlayerController* GetPlayerController() const { return Cast<APlayerController>(GetController()); }
@@ -108,7 +108,7 @@ private:
 	AItem* CarriedItem = nullptr;
 
 public:
-	AItem* GetCarriedItemToDeliver();
+	AItem* DeliverItem();
 
-	void PickupItem(AActor* Item);
+	void PickupItem(AItem* Item);
 };

@@ -8,6 +8,7 @@
 #include "GameFramework/Actor.h"
 #include "Item.generated.h"
 
+class USphereComponent;
 enum EItemShapes : int;
 
 /*
@@ -43,10 +44,17 @@ class CARPENTERDEMO_API AItem : public AActor, public IInteractableInterface
 public:
 	AItem();
 
-public:
+protected:
 	// Create dynamic instance material for color changes
 	virtual void BeginPlay() override;
 
+private:
+	UPROPERTY(VisibleAnywhere)
+	USphereComponent* SphereComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	USceneComponent* SceneComponent;
+	
 private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* StaticMeshComponent;
