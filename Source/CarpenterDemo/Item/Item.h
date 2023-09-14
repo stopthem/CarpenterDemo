@@ -16,16 +16,16 @@ enum EItemShapes : int;
  *
  * Holds information about item
  */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FItemInfo
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	FColor ItemColor;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<EItemShapes> ItemShape = Sphere;
 };
 
@@ -52,9 +52,10 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* SphereComponent;
 
+	// Our root component
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* SceneComponent;
-	
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* StaticMeshComponent;
@@ -69,6 +70,7 @@ private:
 public:
 	FItemInfo GetItemInfo() const { return ItemInfo; }
 
+	UFUNCTION(BlueprintCallable)
 	void SetItemInfo(const FItemInfo& NewItemInfo);
 
 public:
@@ -77,6 +79,7 @@ public:
 	void SetColor(const FColor& NewColor);
 
 private:
+	// Updates the actual material with ItemInfo.ItemColor
 	void UpdateColor() const;
 
 public:

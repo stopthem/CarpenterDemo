@@ -88,6 +88,7 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 public:
+	// Handle interaction when input provided
 	UFUNCTION()
 	void CheckInteract();
 
@@ -96,19 +97,30 @@ private:
 	AActor* CurrentInteractableActor = nullptr;
 
 protected:
+	// Handle interaction beginnings
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
+	// Handle interaction endings
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
+	// Our picked up item will be attached here
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* ItemPickupAttachSceneComponent = nullptr;
 
+	// Our currently carried item
 	UPROPERTY()
 	AItem* CarriedItem = nullptr;
 
 public:
+	UFUNCTION(BlueprintCallable)
+	AItem* GetItem() const { return CarriedItem; }
+
+	// Called by deliver order table to get the item we are holding
+	UFUNCTION(BlueprintCallable)
 	AItem* DeliverItem();
 
+	// Called when we picked up a freshly constructed item
+	// Attaches the given item to our scene component
 	void PickupItem(AItem* Item);
 };
