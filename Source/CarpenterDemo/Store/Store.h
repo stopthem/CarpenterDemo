@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "CarpenterDemo/Item/Item.h"
 #include "GameFramework/Actor.h"
+#include "Kismet/KismetStringLibrary.h"
 #include "Store.generated.h"
 
 
+class UKismetStringLibrary;
 class AItem;
 class UItemShapeDataAsset;
 class UItemColorDataAsset;
@@ -47,6 +49,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s"))
 	float NewOrderWaitTimeMin = 2.0f;
@@ -55,6 +60,7 @@ private:
 	float NewOrderWaitTimeMax = 4.0f;
 
 	// Place a new order
+	UFUNCTION(Server, Reliable)
 	void RequestOrder();
 
 	TQueue<FOrderInfo> ActiveOrders;
@@ -80,7 +86,7 @@ public:
 	TArray<UItemShapeDataAsset*> GetOrderableShapes() { return OrderableShapes; }
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Reliable, Server)
 	void CollectOrder(const AItem* Item);
 
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))
@@ -90,6 +96,7 @@ public:
 	FStore_OnOrderCollected OnOrderCollected;
 
 private:
+	UPROPERTY(Replicated)
 	int32 CurrentBudget;
 
 public:
@@ -99,13 +106,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))
 	int32 StartingBudget = 500;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
 	void SpendBudget(int Amount);
 
-private:
-	int32 CurrentMoney;
+	bool SpendBudget_Validate(int Amount) { return CurrentBudget >= Amount; }
 
-public:
-	UFUNCTION(BlueprintCallable)
-	int32 GetCurrentMoney() const { return CurrentMoney; }
+	void SpendBudget_Implementation(int Amount);
 };

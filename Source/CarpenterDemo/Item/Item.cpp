@@ -5,6 +5,7 @@
 
 #include "CarpenterDemo/CarpenterDemoCharacter.h"
 #include "Components/SphereComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AItem::AItem()
 {
@@ -28,20 +29,40 @@ void AItem::BeginPlay()
 	StaticMeshComponent->SetMaterial(0, MaterialInstanceDynamic);
 }
 
+void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AItem, ItemInfo);
+}
+
+void AItem::OnRep_ItemInfo()
+{
+	if (!MaterialInstanceDynamic)
+	{
+		return;
+	}
+
+	NetMC_UpdateColor();
+}
+
 void AItem::SetItemInfo(const FItemInfo& NewItemInfo)
 {
 	ItemInfo = NewItemInfo;
-
-	UpdateColor();
+	
+	// C++ OnRep only triggers clients but we are Listen as Server so we have to call manually
+	OnRep_ItemInfo();
 }
 
 void AItem::SetColor(const FColor& NewColor)
 {
 	ItemInfo.ItemColor = NewColor;
-	UpdateColor();
+
+	// C++ OnRep only triggers clients but we are Listen as Server so we have to call manually
+	OnRep_ItemInfo();
 }
 
-void AItem::UpdateColor() const
+void AItem::NetMC_UpdateColor_Implementation()
 {
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }
@@ -50,12 +71,11 @@ void AItem::OnInteract_Implementation(AActor* Interactor)
 {
 	IInteractableInterface::OnInteract_Implementation(Interactor);
 
-	if (bPickedUp)
+	// Can interactor pick us up ?
+	if (!Cast<ACarpenterDemoCharacter>(Interactor)->TryPickupItem(this))
 	{
 		return;
 	}
-
-	Cast<ACarpenterDemoCharacter>(Interactor)->PickupItem(this);
 
 	OnPickedUp.Broadcast();
 

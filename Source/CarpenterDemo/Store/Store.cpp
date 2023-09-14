@@ -4,6 +4,7 @@
 #include "Store.h"
 
 #include "CarpenterDemo/Item/ItemColorDataAsset.h"
+#include "Net/UnrealNetwork.h"
 
 bool FOrderInfo::operator==(const FOrderInfo& OtherOrderInfo) const
 {
@@ -27,7 +28,14 @@ void AStore::BeginPlay()
 	}));
 }
 
-void AStore::RequestOrder()
+void AStore::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AStore, CurrentBudget);
+}
+
+void AStore::RequestOrder_Implementation()
 {
 	// Get random color data asset
 	UItemColorDataAsset* RandomColorDataAsset = OrderableColors[FMath::RandRange(0, OrderableColors.Num() - 1)];
@@ -49,7 +57,7 @@ void AStore::OnOrderPickedUp()
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &AStore::RequestOrder, FMath::RandRange(NewOrderWaitTimeMin, NewOrderWaitTimeMax));
 }
 
-void AStore::CollectOrder(const AItem* Item)
+void AStore::CollectOrder_Implementation(const AItem* Item)
 {
 	int32 Reward = OrderReward;
 
@@ -69,12 +77,13 @@ void AStore::CollectOrder(const AItem* Item)
 		Reward /= 2;
 	}
 
-	CurrentMoney += Reward;
+	CurrentBudget += Reward;
 
 	OnOrderCollected.Broadcast(OrderInfo);
 }
 
-void AStore::SpendBudget(int Amount)
+void AStore::SpendBudget_Implementation(int Amount)
 {
 	CurrentBudget -= Amount;
+	CurrentBudget = FMath::Clamp(CurrentBudget, 0,INT_MAX);
 }

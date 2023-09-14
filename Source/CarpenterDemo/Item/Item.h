@@ -48,6 +48,9 @@ protected:
 	// Create dynamic instance material for color changes
 	virtual void BeginPlay() override;
 
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* SphereComponent;
@@ -65,7 +68,11 @@ private:
 	UMaterialInstanceDynamic* MaterialInstanceDynamic;
 
 private:
+	UPROPERTY(ReplicatedUsing = OnRep_ItemInfo)
 	FItemInfo ItemInfo;
+
+	UFUNCTION()
+	void OnRep_ItemInfo();
 
 public:
 	FItemInfo GetItemInfo() const { return ItemInfo; }
@@ -74,13 +81,14 @@ public:
 	void SetItemInfo(const FItemInfo& NewItemInfo);
 
 public:
-	// Changes ItemColor and updates the actual material
+	// Changes ItemInfo.NewColor which causes ItemInfo OnRep
 	UFUNCTION(BlueprintCallable)
 	void SetColor(const FColor& NewColor);
 
 private:
 	// Updates the actual material with ItemInfo.ItemColor
-	void UpdateColor() const;
+	UFUNCTION(NetMulticast, Unreliable)
+	void NetMC_UpdateColor();
 
 public:
 	// Handles being picked up by player

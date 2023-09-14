@@ -51,14 +51,6 @@ ACarpenterDemoCharacter::ACarpenterDemoCharacter()
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
 
-void ACarpenterDemoCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	APlayerController* PlayerController = GetPlayerController();
-	PrevRotationalInputScales = {PlayerController->InputRollScale, PlayerController->InputPitchScale, PlayerController->InputYawScale};
-}
-
 //////////////////////////////////////////////////////////////////////////
 // Input
 void ACarpenterDemoCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -133,20 +125,18 @@ AItem* ACarpenterDemoCharacter::DeliverItem()
 	return Item;
 }
 
-void ACarpenterDemoCharacter::PickupItem(AItem* Item)
+bool ACarpenterDemoCharacter::TryPickupItem(AItem* Item)
 {
+	if (CarriedItem)
+	{
+		return false;
+	}
+
 	Item->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	CarriedItem = Item;
-}
 
-void ACarpenterDemoCharacter::HandleRotationalInput(bool bEnable)
-{
-	APlayerController* PlayerController = GetPlayerController();
-
-	PlayerController->InputRollScale = bEnable ? PrevRotationalInputScales.X : 0;
-	PlayerController->InputPitchScale = bEnable ? PrevRotationalInputScales.Y : 0;
-	PlayerController->InputYawScale = bEnable ? PrevRotationalInputScales.Z : 0;
+	return true;
 }
 
 void ACarpenterDemoCharacter::OnResetVR()

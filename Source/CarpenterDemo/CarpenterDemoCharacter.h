@@ -14,9 +14,6 @@ class ACarpenterDemoCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-protected:
-	virtual void BeginPlay() override;
-
 public:
 	UFUNCTION(BlueprintCallable)
 	APlayerController* GetPlayerController() const { return Cast<APlayerController>(GetController()); }
@@ -40,13 +37,6 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
-
-private:
-	FVector PrevRotationalInputScales = FVector::ZeroVector;
-
-public:
-	UFUNCTION(BlueprintCallable)
-	void HandleRotationalInput(bool bEnable);
 
 protected:
 	/** Resets HMD orientation in VR. */
@@ -122,5 +112,5 @@ public:
 
 	// Called when we picked up a freshly constructed item
 	// Attaches the given item to our scene component
-	void PickupItem(AItem* Item);
+	bool TryPickupItem(AItem* Item);
 };
