@@ -120,22 +120,26 @@ void ACarpenterDemoCharacter::OnRep_CarriedItem()
 {
 	if (!CarriedItem)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("this"));
 		return;
 	}
 
 	CarriedItem->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 }
 
-AItem* ACarpenterDemoCharacter::DeliverItem()
+void ACarpenterDemoCharacter::Server_DeliveredItem_Implementation()
 {
-	if (!CarriedItem)
-	{
-		return nullptr;
-	}
+	Client_DeliveredItem();
+}
 
-	AItem* Item = CarriedItem;
-	CarriedItem = nullptr;
-	return Item;
+bool ACarpenterDemoCharacter::Server_DeliveredItem_Validate()
+{
+	return IsValid(CarriedItem);
+}
+
+void ACarpenterDemoCharacter::Client_DeliveredItem_Implementation()
+{
+	CarriedItem->Destroy();
 }
 
 bool ACarpenterDemoCharacter::Server_TryPickupItem_Validate(AItem* Item)

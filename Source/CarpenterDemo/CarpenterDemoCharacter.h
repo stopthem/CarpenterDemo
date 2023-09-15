@@ -105,9 +105,19 @@ public:
 	AItem* GetItem() const { return CarriedItem; }
 
 	// Called by deliver order table to get the item we are holding
-	UFUNCTION(BlueprintCallable)
-	AItem* DeliverItem();
+	UFUNCTION(BlueprintCallable, Server, Unreliable, WithValidation)
+	void Server_DeliveredItem();
 
+private:
+	// Reset CarriedItem
+	UFUNCTION(NetMulticast, Unreliable)
+	void Client_DeliveredItem();
+
+	// Do we really have a CarriedItem validation
+	UFUNCTION()
+	bool Server_DeliveredItem_Validate();
+
+public:
 	// Called when we picked up a freshly constructed item
 	// Attaches the given item to our scene component
 	UFUNCTION(Unreliable, NetMulticast)

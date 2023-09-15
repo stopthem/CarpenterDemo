@@ -68,6 +68,7 @@ void AStore::OnRep_ActiveOrders()
 		WantsToCollect = false;
 		return;
 	}
+	
 	const FOrderInfo OrderInfo = ActiveOrders[0];
 	FString lel = FString::Printf(TEXT("%s %s %i"), *UEnum::GetValueAsString(OrderInfo.ItemShapeDataAsset->ItemShape), *OrderInfo.ItemColorDataAsset->ColorName, ActiveOrders.Num());
 	GEngine->AddOnScreenDebugMessage(2, 3.0f, FColor::Silver, lel);
