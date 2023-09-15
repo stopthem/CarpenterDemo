@@ -21,10 +21,10 @@ struct FOrderInfo
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Order")
-	UItemColorDataAsset* ItemColorDataAsset;
+	UItemColorDataAsset* ItemColorDataAsset = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Order")
-	UItemShapeDataAsset* ItemShapeDataAsset;
+	UItemShapeDataAsset* ItemShapeDataAsset = nullptr;
 
 	bool operator==(const FOrderInfo& OtherOrderInfo) const;
 };
@@ -60,10 +60,17 @@ private:
 	float NewOrderWaitTimeMax = 4.0f;
 
 	// Place a new order
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Unreliable,NetMulticast)
 	void RequestOrder();
 
-	TQueue<FOrderInfo> ActiveOrders;
+	UPROPERTY(ReplicatedUsing = OnRep_ActiveOrders)
+	TArray<FOrderInfo> ActiveOrders;
+
+	UFUNCTION()
+	void OnRep_ActiveOrders();
+
+	// UPROPERTY(Replicated)
+	bool WantsToCollect;
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -86,7 +93,7 @@ public:
 	TArray<UItemShapeDataAsset*> GetOrderableShapes() { return OrderableShapes; }
 
 public:
-	UFUNCTION(BlueprintCallable, Reliable, Server)
+	UFUNCTION(BlueprintCallable, Reliable, NetMulticast)
 	void CollectOrder(const AItem* Item);
 
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))

@@ -19,6 +19,10 @@ public:
 	APlayerController* GetPlayerController() const { return Cast<APlayerController>(GetController()); }
 
 public:
+	// It gives error when not implemented. I don't know why
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
@@ -39,9 +43,6 @@ public:
 	float BaseLookUpRate;
 
 protected:
-	/** Resets HMD orientation in VR. */
-	void OnResetVR();
-
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
 
@@ -59,12 +60,6 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
 protected:
 	// APawn interface
@@ -99,8 +94,11 @@ private:
 	USceneComponent* ItemPickupAttachSceneComponent = nullptr;
 
 	// Our currently carried item
-	UPROPERTY()
-	AItem* CarriedItem = nullptr;
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedItem)
+	AItem* CarriedItem;
+
+	UFUNCTION()
+	void OnRep_CarriedItem();
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -112,5 +110,12 @@ public:
 
 	// Called when we picked up a freshly constructed item
 	// Attaches the given item to our scene component
-	bool TryPickupItem(AItem* Item);
+	UFUNCTION(Unreliable, NetMulticast)
+	void Client_TryPickupItem(AItem* Item);
+
+	UFUNCTION(Unreliable, Server, WithValidation)
+	void Server_TryPickupItem(AItem* Item);
+
+	UFUNCTION()
+	bool Server_TryPickupItem_Validate(AItem* Item);
 };

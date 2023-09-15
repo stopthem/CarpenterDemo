@@ -18,6 +18,10 @@ AItem::AItem()
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("InteractionSphereComponent");
 	SphereComponent->InitSphereRadius(100.0f);
 	SphereComponent->SetupAttachment(SceneComponent);
+
+	bReplicates = true;
+
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AItem::BeginPlay()
@@ -43,13 +47,13 @@ void AItem::OnRep_ItemInfo()
 		return;
 	}
 
-	NetMC_UpdateColor();
+	UpdateColor();
 }
 
 void AItem::SetItemInfo(const FItemInfo& NewItemInfo)
 {
 	ItemInfo = NewItemInfo;
-	
+
 	// C++ OnRep only triggers clients but we are Listen as Server so we have to call manually
 	OnRep_ItemInfo();
 }
@@ -62,22 +66,29 @@ void AItem::SetColor(const FColor& NewColor)
 	OnRep_ItemInfo();
 }
 
-void AItem::NetMC_UpdateColor_Implementation()
+void AItem::UpdateColor()
 {
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
+}
+
+void AItem::TryGettingPickedUp_Implementation(AActor* Interactor)
+{
+	ACarpenterDemoCharacter* CarpenterDemoCharacter = Cast<ACarpenterDemoCharacter>(Interactor);
+	// Can interactor pick us up ?
+	if (CarpenterDemoCharacter->GetItem())
+	{
+		return;
+	}
+
+	CarpenterDemoCharacter->Server_TryPickupItem(this);
+	OnPickedUp.Broadcast();
+
+	bPickedUp = true;
 }
 
 void AItem::OnInteract_Implementation(AActor* Interactor)
 {
 	IInteractableInterface::OnInteract_Implementation(Interactor);
 
-	// Can interactor pick us up ?
-	if (!Cast<ACarpenterDemoCharacter>(Interactor)->TryPickupItem(this))
-	{
-		return;
-	}
-
-	OnPickedUp.Broadcast();
-
-	bPickedUp = true;
+	TryGettingPickedUp(Interactor);
 }

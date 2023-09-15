@@ -75,6 +75,7 @@ private:
 	void OnRep_ItemInfo();
 
 public:
+	UFUNCTION(BlueprintCallable)
 	FItemInfo GetItemInfo() const { return ItemInfo; }
 
 	UFUNCTION(BlueprintCallable)
@@ -86,9 +87,11 @@ public:
 	void SetColor(const FColor& NewColor);
 
 private:
-	// Updates the actual material with ItemInfo.ItemColor
+	// Updates the actual material
+	void UpdateColor();
+
 	UFUNCTION(NetMulticast, Unreliable)
-	void NetMC_UpdateColor();
+	void TryGettingPickedUp(AActor* Interactor);
 
 public:
 	// Handles being picked up by player

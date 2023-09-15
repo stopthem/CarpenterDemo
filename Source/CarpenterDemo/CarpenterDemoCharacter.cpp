@@ -10,14 +10,13 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Interfaces/InteractableInterface.h"
 #include "Item/Item.h"
+#include "Net/UnrealNetwork.h"
+
 
 //////////////////////////////////////////////////////////////////////////
 // ACarpenterDemoCharacter
 ACarpenterDemoCharacter::ACarpenterDemoCharacter()
 {
-	// Create the scene component that item pickup will attach.
-	ItemPickupAttachSceneComponent = CreateDefaultSubobject<USceneComponent>("ItemAttachSceneComponent");
-
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -49,6 +48,17 @@ ACarpenterDemoCharacter::ACarpenterDemoCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	// Create the scene component that item pickup will attach.
+	ItemPickupAttachSceneComponent = CreateDefaultSubobject<USceneComponent>("ItemAttachSceneComponent");
+	ItemPickupAttachSceneComponent->SetupAttachment(GetRootComponent());
+}
+
+void ACarpenterDemoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACarpenterDemoCharacter, CarriedItem);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -70,13 +80,6 @@ void ACarpenterDemoCharacter::SetupPlayerInputComponent(class UInputComponent* P
 	PlayerInputComponent->BindAxis("TurnRate", this, &ACarpenterDemoCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ACarpenterDemoCharacter::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &ACarpenterDemoCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &ACarpenterDemoCharacter::TouchStopped);
-
-	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ACarpenterDemoCharacter::OnResetVR);
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ACarpenterDemoCharacter::CheckInteract);
 }
@@ -113,6 +116,16 @@ void ACarpenterDemoCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
+void ACarpenterDemoCharacter::OnRep_CarriedItem()
+{
+	if (!CarriedItem)
+	{
+		return;
+	}
+
+	CarriedItem->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+}
+
 AItem* ACarpenterDemoCharacter::DeliverItem()
 {
 	if (!CarriedItem)
@@ -125,39 +138,20 @@ AItem* ACarpenterDemoCharacter::DeliverItem()
 	return Item;
 }
 
-bool ACarpenterDemoCharacter::TryPickupItem(AItem* Item)
+bool ACarpenterDemoCharacter::Server_TryPickupItem_Validate(AItem* Item)
 {
-	if (CarriedItem)
-	{
-		return false;
-	}
+	return Item && !CarriedItem;
+}
 
-	Item->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+void ACarpenterDemoCharacter::Server_TryPickupItem_Implementation(AItem* Item)
+{
+	Client_TryPickupItem(Item);
+}
 
+void ACarpenterDemoCharacter::Client_TryPickupItem_Implementation(AItem* Item)
+{
 	CarriedItem = Item;
-
-	return true;
-}
-
-void ACarpenterDemoCharacter::OnResetVR()
-{
-	// If CarpenterDemo is added to a project via 'Add Feature' in the Unreal Editor the dependency on HeadMountedDisplay in CarpenterDemo.Build.cs is not automatically propagated
-	// and a linker error will result.
-	// You will need to either:
-	//		Add "HeadMountedDisplay" to [YourProject].Build.cs PublicDependencyModuleNames in order to build successfully (appropriate if supporting VR).
-	// or:
-	//		Comment or delete the call to ResetOrientationAndPosition below (appropriate if not supporting VR)
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void ACarpenterDemoCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	Jump();
-}
-
-void ACarpenterDemoCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	StopJumping();
+	OnRep_CarriedItem();
 }
 
 void ACarpenterDemoCharacter::TurnAtRate(float Rate)
