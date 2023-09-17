@@ -88,8 +88,9 @@ public:
 	void SetColor(const FColor& NewColor);
 
 private:
-	// Updates the actual material
-	void UpdateColor() const;
+	// Updates the actual material in all instances of this actor
+	UFUNCTION(NetMulticast, Reliable)
+	void Nmc_UpdateColor() const;
 
 public:
 	UFUNCTION(NetMulticast, Reliable)

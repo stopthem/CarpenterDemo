@@ -50,7 +50,7 @@ void AItem::OnRep_ItemInfo() const
 		return;
 	}
 
-	UpdateColor();
+	Nmc_UpdateColor();
 }
 
 void AItem::SetItemInfo(const FItemInfo& NewItemInfo)
@@ -69,7 +69,7 @@ void AItem::SetColor(const FColor& NewColor)
 	OnRep_ItemInfo();
 }
 
-void AItem::UpdateColor() const
+void AItem::Nmc_UpdateColor_Implementation() const
 {
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }

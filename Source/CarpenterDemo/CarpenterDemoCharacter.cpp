@@ -127,6 +127,7 @@ void ACarpenterDemoCharacter::OnRep_CarriedItem() const
 	}
 
 	CarriedItem->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	CarriedItem->PickedUp();
 }
 
 void ACarpenterDemoCharacter::DeliveredItem()
@@ -138,7 +139,6 @@ void ACarpenterDemoCharacter::DeliveredItem()
 void ACarpenterDemoCharacter::Server_PickupItem_Implementation(AItem* Item)
 {
 	CarriedItem = Item;
-	Item->PickedUp();
 	// For server
 	OnRep_CarriedItem();
 }

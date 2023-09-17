@@ -106,6 +106,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AItem* GetItem() const { return CarriedItem; }
 
+	UFUNCTION(BlueprintCallable)
+	bool HasItem() const { return CarriedItem != nullptr; }
+
 private:
 	// Resets CarriedItem and destroys it
 	UFUNCTION(BlueprintCallable)
