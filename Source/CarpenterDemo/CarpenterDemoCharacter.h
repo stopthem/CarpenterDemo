@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "CarpenterDemoCharacter.generated.h"
 
+class AStore;
 class AItem;
 class IInteractableInterface;
 
@@ -97,35 +98,25 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedItem)
 	AItem* CarriedItem;
 
+	// Attaches item to us when its replicated
 	UFUNCTION()
-	void OnRep_CarriedItem();
+	void OnRep_CarriedItem() const;
 
 public:
 	UFUNCTION(BlueprintCallable)
 	AItem* GetItem() const { return CarriedItem; }
 
-	// Called by deliver order table to get the item we are holding
-	UFUNCTION(BlueprintCallable, Server, Unreliable, WithValidation)
-	void Server_DeliveredItem();
-
 private:
-	// Reset CarriedItem
-	UFUNCTION(NetMulticast, Unreliable)
-	void Client_DeliveredItem();
-
-	// Do we really have a CarriedItem validation
-	UFUNCTION()
-	bool Server_DeliveredItem_Validate();
+	// Resets CarriedItem and destroys it
+	UFUNCTION(BlueprintCallable)
+	void DeliveredItem();
 
 public:
 	// Called when we picked up a freshly constructed item
-	// Attaches the given item to our scene component
-	UFUNCTION(Unreliable, NetMulticast)
-	void Client_TryPickupItem(AItem* Item);
-
 	UFUNCTION(Unreliable, Server, WithValidation)
-	void Server_TryPickupItem(AItem* Item);
+	void Server_PickupItem(AItem* Item);
 
+private:
 	UFUNCTION()
-	bool Server_TryPickupItem_Validate(AItem* Item);
+	bool Server_PickupItem_Validate(AItem* Item);
 };

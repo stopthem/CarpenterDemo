@@ -11,6 +11,7 @@
 #include "Interfaces/InteractableInterface.h"
 #include "Item/Item.h"
 #include "Net/UnrealNetwork.h"
+#include "Store/Store.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -24,7 +25,7 @@ ACarpenterDemoCharacter::ACarpenterDemoCharacter()
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 
-	// Don't rotate when the controller rotates. Let that just affect the camera.
+	// Don't rotate when the controller rotates. Let that just affect the camera
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -49,9 +50,11 @@ ACarpenterDemoCharacter::ACarpenterDemoCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
-	// Create the scene component that item pickup will attach.
+	// Create the scene component that item pickup will attach
 	ItemPickupAttachSceneComponent = CreateDefaultSubobject<USceneComponent>("ItemAttachSceneComponent");
 	ItemPickupAttachSceneComponent->SetupAttachment(GetRootComponent());
+
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void ACarpenterDemoCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -116,46 +119,33 @@ void ACarpenterDemoCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
-void ACarpenterDemoCharacter::OnRep_CarriedItem()
+void ACarpenterDemoCharacter::OnRep_CarriedItem() const
 {
 	if (!CarriedItem)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("this"));
 		return;
 	}
 
 	CarriedItem->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 }
 
-void ACarpenterDemoCharacter::Server_DeliveredItem_Implementation()
-{
-	Client_DeliveredItem();
-}
-
-bool ACarpenterDemoCharacter::Server_DeliveredItem_Validate()
-{
-	return IsValid(CarriedItem);
-}
-
-void ACarpenterDemoCharacter::Client_DeliveredItem_Implementation()
+void ACarpenterDemoCharacter::DeliveredItem()
 {
 	CarriedItem->Destroy();
+	CarriedItem = nullptr;
 }
 
-bool ACarpenterDemoCharacter::Server_TryPickupItem_Validate(AItem* Item)
-{
-	return Item && !CarriedItem;
-}
-
-void ACarpenterDemoCharacter::Server_TryPickupItem_Implementation(AItem* Item)
-{
-	Client_TryPickupItem(Item);
-}
-
-void ACarpenterDemoCharacter::Client_TryPickupItem_Implementation(AItem* Item)
+void ACarpenterDemoCharacter::Server_PickupItem_Implementation(AItem* Item)
 {
 	CarriedItem = Item;
+	Item->PickedUp();
+	// For server
 	OnRep_CarriedItem();
+}
+
+bool ACarpenterDemoCharacter::Server_PickupItem_Validate(AItem* Item)
+{
+	return Item && !Item->IsPickedUp() && !CarriedItem;
 }
 
 void ACarpenterDemoCharacter::TurnAtRate(float Rate)

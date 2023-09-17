@@ -23,7 +23,7 @@ struct FItemInfo
 
 public:
 	UPROPERTY(BlueprintReadWrite)
-	FColor ItemColor;
+	FColor ItemColor = FColor::Silver;
 
 	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<EItemShapes> ItemShape = Sphere;
@@ -49,6 +49,7 @@ protected:
 	virtual void BeginPlay() override;
 
 protected:
+	// Replicate variables
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
@@ -72,7 +73,7 @@ private:
 	FItemInfo ItemInfo;
 
 	UFUNCTION()
-	void OnRep_ItemInfo();
+	void OnRep_ItemInfo() const;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -88,10 +89,11 @@ public:
 
 private:
 	// Updates the actual material
-	void UpdateColor();
+	void UpdateColor() const;
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void TryGettingPickedUp(AActor* Interactor);
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void PickedUp();
 
 public:
 	// Handles being picked up by player
@@ -99,6 +101,9 @@ public:
 
 private:
 	bool bPickedUp = false;
+
+public:
+	bool IsPickedUp() const { return bPickedUp; }
 
 public:
 	// Broadcasted when this item has been picked up

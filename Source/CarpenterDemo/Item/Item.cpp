@@ -9,16 +9,19 @@
 
 AItem::AItem()
 {
+	// Create root component
 	SceneComponent = CreateDefaultSubobject<USceneComponent>("SceneComponent");
 	SetRootComponent(SceneComponent);
 
+	// Create mesh and attach to root
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
 	StaticMeshComponent->SetupAttachment(SceneComponent);
 
+	// Create sphere component for interaction and attach to root
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("InteractionSphereComponent");
 	SphereComponent->InitSphereRadius(100.0f);
 	SphereComponent->SetupAttachment(SceneComponent);
-
+	
 	bReplicates = true;
 
 	PrimaryActorTick.bCanEverTick = false;
@@ -40,7 +43,7 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	DOREPLIFETIME(AItem, ItemInfo);
 }
 
-void AItem::OnRep_ItemInfo()
+void AItem::OnRep_ItemInfo() const
 {
 	if (!MaterialInstanceDynamic)
 	{
@@ -66,21 +69,13 @@ void AItem::SetColor(const FColor& NewColor)
 	OnRep_ItemInfo();
 }
 
-void AItem::UpdateColor()
+void AItem::UpdateColor() const
 {
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }
 
-void AItem::TryGettingPickedUp_Implementation(AActor* Interactor)
+void AItem::PickedUp_Implementation()
 {
-	ACarpenterDemoCharacter* CarpenterDemoCharacter = Cast<ACarpenterDemoCharacter>(Interactor);
-	// Can interactor pick us up ?
-	if (CarpenterDemoCharacter->GetItem())
-	{
-		return;
-	}
-
-	CarpenterDemoCharacter->Server_TryPickupItem(this);
 	OnPickedUp.Broadcast();
 
 	bPickedUp = true;
@@ -90,5 +85,13 @@ void AItem::OnInteract_Implementation(AActor* Interactor)
 {
 	IInteractableInterface::OnInteract_Implementation(Interactor);
 
-	TryGettingPickedUp(Interactor);
+	ACarpenterDemoCharacter* CarpenterDemoCharacter = Cast<ACarpenterDemoCharacter>(Interactor);
+	
+	// Can interactor pick us up ?
+	if (CarpenterDemoCharacter->GetItem() || bPickedUp)
+	{
+		return;
+	}
+
+	CarpenterDemoCharacter->Server_PickupItem(this);
 }

@@ -5,15 +5,21 @@
 #include "CoreMinimal.h"
 #include "CarpenterDemo/Item/Item.h"
 #include "GameFramework/Actor.h"
-#include "Kismet/KismetStringLibrary.h"
+
 #include "Store.generated.h"
 
 
+class ACarpenterDemoGameMode;
 class UKismetStringLibrary;
 class AItem;
 class UItemShapeDataAsset;
 class UItemColorDataAsset;
 
+/*
+ * FOrderInfo
+ *
+ * Struct that holds a order
+ */
 USTRUCT(BlueprintType)
 struct FOrderInfo
 {
@@ -25,13 +31,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Order")
 	UItemShapeDataAsset* ItemShapeDataAsset = nullptr;
-
-	bool operator==(const FOrderInfo& OtherOrderInfo) const;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStore_OnOrderRequested, FOrderInfo, OrderInfo);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStore_OnOrderCollected, FOrderInfo, OrderInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStore_OnOrderCollected);
 
 /*
  * AStore
@@ -47,10 +51,16 @@ public:
 	AStore();
 
 protected:
+	// Call GameMode to request a store order
 	virtual void BeginPlay() override;
 
 protected:
+	// Replicate variables
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+private:
+	UPROPERTY()
+	ACarpenterDemoGameMode* CarpenterDemoGameMode;
 
 private:
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s"))
@@ -59,64 +69,69 @@ private:
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s"))
 	float NewOrderWaitTimeMax = 4.0f;
 
-	// Place a new order
-	UFUNCTION(Unreliable,NetMulticast)
-	void RequestOrder();
-
-	UPROPERTY(ReplicatedUsing = OnRep_ActiveOrders)
+public:
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	TArray<FOrderInfo> ActiveOrders;
 
-	UFUNCTION()
-	void OnRep_ActiveOrders();
-
-	// UPROPERTY(Replicated)
-	bool WantsToCollect;
-
-public:
+private:
 	UPROPERTY(BlueprintAssignable)
 	FStore_OnOrderRequested OnOrderRequested;
 
 public:
+	// Broadcast OnOrderRequested on all Clients and Server
+	UFUNCTION(NetMulticast, Unreliable)
+	void Nmc_BroadcastOnOrderRequested(const FOrderInfo OrderInfo);
+
+public:
+	// Called when ChippingTable constructed item is picked up
 	UFUNCTION(BlueprintCallable)
 	void OnOrderPickedUp();
 
 private:
 	UPROPERTY(EditAnywhere, Category="Order|Orderable Items")
-	TArray<UItemColorDataAsset*> OrderableColors;
+	TArray<UItemColorDataAsset*> OrderableColorDataAssets;
+
+public:
+	UFUNCTION()
+	TArray<UItemColorDataAsset*> GetOrderableColorDataAssets() const { return OrderableColorDataAssets; }
 
 private:
 	UPROPERTY(EditAnywhere, Category="Order|Orderable Items")
-	TArray<UItemShapeDataAsset*> OrderableShapes;
+	TArray<UItemShapeDataAsset*> OrderableShapeDataAssets;
 
 public:
 	UFUNCTION(BlueprintCallable)
-	TArray<UItemShapeDataAsset*> GetOrderableShapes() { return OrderableShapes; }
+	TArray<UItemShapeDataAsset*> GetOrderableShapeDataAssets() { return OrderableShapeDataAssets; }
 
 public:
-	UFUNCTION(BlueprintCallable, Reliable, NetMulticast)
+	// Called when OrderDeliverTable collected a item locally
+	UFUNCTION(BlueprintCallable)
 	void CollectOrder(const AItem* Item);
 
+	// Reward for perfect order deliver
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))
 	int32 OrderReward = 100;
 
+private:
 	UPROPERTY(BlueprintAssignable)
 	FStore_OnOrderCollected OnOrderCollected;
 
-private:
-	UPROPERTY(Replicated)
-	int32 CurrentBudget;
+public:
+	// Broadcast OnOrderCollected to all Clients and Server
+	UFUNCTION(NetMulticast, Unreliable)
+	void Nmc_BroadcastOnOrderCollected();
 
 public:
-	UFUNCTION(BlueprintCallable)
-	int32 GetCurrentBudget() const { return CurrentBudget; }
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	int32 CurrentBudget;
 
+private:
 	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))
 	int32 StartingBudget = 500;
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
+public:
+	UFUNCTION(BlueprintCallable)
 	void SpendBudget(int Amount);
-
-	bool SpendBudget_Validate(int Amount) { return CurrentBudget >= Amount; }
-
+	
 	void SpendBudget_Implementation(int Amount);
 };
