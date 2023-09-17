@@ -2,8 +2,6 @@
 
 #include "CarpenterDemoGameMode.h"
 
-#include <string>
-
 #include "Item/ItemColorDataAsset.h"
 #include "Item/ItemShapeDataAsset.h"
 #include "Store/Store.h"

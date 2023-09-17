@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "CarpenterDemoCharacter.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -11,7 +10,6 @@
 #include "Interfaces/InteractableInterface.h"
 #include "Item/Item.h"
 #include "Net/UnrealNetwork.h"
-#include "Store/Store.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -145,7 +143,7 @@ void ACarpenterDemoCharacter::Server_PickupItem_Implementation(AItem* Item)
 
 bool ACarpenterDemoCharacter::Server_PickupItem_Validate(AItem* Item)
 {
-	return Item && !Item->IsPickedUp() && !CarriedItem;
+	return Item && !Item->IsPickedUp() && !HasItem();
 }
 
 void ACarpenterDemoCharacter::TurnAtRate(float Rate)

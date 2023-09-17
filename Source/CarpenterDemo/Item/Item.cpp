@@ -16,7 +16,8 @@ AItem::AItem()
 	// Create mesh and attach to root
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
 	StaticMeshComponent->SetupAttachment(SceneComponent);
-
+	StaticMeshComponent->SetIsReplicated(true);
+	
 	// Create sphere component for interaction and attach to root
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("InteractionSphereComponent");
 	SphereComponent->InitSphereRadius(100.0f);
@@ -27,15 +28,6 @@ AItem::AItem()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-void AItem::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// Create dynamic material instance and set it to our mesh
-	MaterialInstanceDynamic = StaticMeshComponent->CreateDynamicMaterialInstance(0);
-	StaticMeshComponent->SetMaterial(0, MaterialInstanceDynamic);
-}
-
 void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -43,14 +35,17 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	DOREPLIFETIME(AItem, ItemInfo);
 }
 
-void AItem::OnRep_ItemInfo() const
+void AItem::OnRep_ItemInfo()
 {
+	// Check material instance exists if not create one
 	if (!MaterialInstanceDynamic)
 	{
-		return;
+		// Create dynamic material instance and set it to our mesh
+		MaterialInstanceDynamic = StaticMeshComponent->CreateDynamicMaterialInstance(0);
+		StaticMeshComponent->SetMaterial(0, MaterialInstanceDynamic);
 	}
 
-	Nmc_UpdateColor();
+	UpdateColor();
 }
 
 void AItem::SetItemInfo(const FItemInfo& NewItemInfo)
@@ -69,7 +64,7 @@ void AItem::SetColor(const FColor& NewColor)
 	OnRep_ItemInfo();
 }
 
-void AItem::Nmc_UpdateColor_Implementation() const
+void AItem::UpdateColor() const
 {
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }

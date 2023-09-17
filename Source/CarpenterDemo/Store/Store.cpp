@@ -2,7 +2,6 @@
 
 
 #include "Store.h"
-
 #include "CarpenterDemo/CarpenterDemoGameMode.h"
 #include "Net/UnrealNetwork.h"
 

@@ -45,10 +45,6 @@ public:
 	AItem();
 
 protected:
-	// Create dynamic instance material for color changes
-	virtual void BeginPlay() override;
-
-protected:
 	// Replicate variables
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -73,7 +69,7 @@ private:
 	FItemInfo ItemInfo;
 
 	UFUNCTION()
-	void OnRep_ItemInfo() const;
+	void OnRep_ItemInfo();
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -88,9 +84,8 @@ public:
 	void SetColor(const FColor& NewColor);
 
 private:
-	// Updates the actual material in all instances of this actor
-	UFUNCTION(NetMulticast, Reliable)
-	void Nmc_UpdateColor() const;
+	// Updates the actual material with ItemInfo
+	void UpdateColor() const;
 
 public:
 	UFUNCTION(NetMulticast, Reliable)

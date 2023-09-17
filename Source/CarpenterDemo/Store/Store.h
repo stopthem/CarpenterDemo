@@ -10,7 +10,6 @@
 
 
 class ACarpenterDemoGameMode;
-class UKismetStringLibrary;
 class AItem;
 class UItemShapeDataAsset;
 class UItemColorDataAsset;
@@ -130,8 +129,8 @@ private:
 	int32 StartingBudget = 500;
 
 public:
+	// Reduce budget by Amount
+	// Only called from server
 	UFUNCTION(BlueprintCallable)
 	void SpendBudget(int Amount);
-	
-	void SpendBudget_Implementation(int Amount);
 };
