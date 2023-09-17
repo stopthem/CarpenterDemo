@@ -72,7 +72,7 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	TArray<FOrderInfo> ActiveOrders;
 
-public:
+private:
 	UPROPERTY(BlueprintAssignable)
 	FStore_OnOrderRequested OnOrderRequested;
 
@@ -82,7 +82,7 @@ public:
 	void Nmc_BroadcastOnOrderRequested(const FOrderInfo OrderInfo);
 
 public:
-	// Called when ChippingTable constructed item is picked up
+	// Called when ChippingTable constructed item is picked up so we request a new order
 	UFUNCTION(BlueprintCallable)
 	void OnOrderPickedUp();
 
@@ -130,7 +130,7 @@ private:
 
 public:
 	// Reduce budget by Amount
-	// Only called from server
+	// Only called from server actor
 	UFUNCTION(BlueprintCallable)
 	void SpendBudget(int Amount);
 };
