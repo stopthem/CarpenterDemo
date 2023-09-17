@@ -26,7 +26,7 @@ public:
 	FColor ItemColor = FColor::Silver;
 
 	UPROPERTY(BlueprintReadWrite)
-	TEnumAsByte<EItemShapes> ItemShape = Sphere;
+	TEnumAsByte<EItemShapes> ItemShape = None;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FItem_OnPickedUp);
@@ -85,7 +85,7 @@ public:
 
 private:
 	// Updates the actual material with ItemInfo
-	void UpdateColor() const;
+	void UpdateColor();
 
 public:
 	UFUNCTION(NetMulticast, Reliable)

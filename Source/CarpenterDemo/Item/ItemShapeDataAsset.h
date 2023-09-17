@@ -16,6 +16,7 @@ class AItem;
 UENUM(BlueprintType)
 enum EItemShapes
 {
+	None UMETA(Hidden), // Added because if struct values are not changed in ItemInfo, struct does not call OnRep.
 	Sphere,
 	Cube
 };
@@ -32,7 +33,7 @@ class CARPENTERDEMO_API UItemShapeDataAsset : public UDataAsset
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TEnumAsByte<EItemShapes> ItemShape;
+	TEnumAsByte<EItemShapes> ItemShape = Sphere;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<AItem> ItemBP = nullptr;

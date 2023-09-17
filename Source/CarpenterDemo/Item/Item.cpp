@@ -17,12 +17,12 @@ AItem::AItem()
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
 	StaticMeshComponent->SetupAttachment(SceneComponent);
 	StaticMeshComponent->SetIsReplicated(true);
-	
+
 	// Create sphere component for interaction and attach to root
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("InteractionSphereComponent");
 	SphereComponent->InitSphereRadius(100.0f);
 	SphereComponent->SetupAttachment(SceneComponent);
-	
+
 	bReplicates = true;
 
 	PrimaryActorTick.bCanEverTick = false;
@@ -37,6 +37,27 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 
 void AItem::OnRep_ItemInfo()
 {
+	UpdateColor();
+}
+
+void AItem::SetItemInfo(const FItemInfo& NewItemInfo)
+{
+	ItemInfo = NewItemInfo;
+
+	// For server
+	OnRep_ItemInfo();
+}
+
+void AItem::SetColor(const FColor& NewColor)
+{
+	ItemInfo.ItemColor = NewColor;
+
+	// For server
+	OnRep_ItemInfo();
+}
+
+void AItem::UpdateColor()
+{
 	// Check material instance exists if not create one
 	if (!MaterialInstanceDynamic)
 	{
@@ -45,27 +66,6 @@ void AItem::OnRep_ItemInfo()
 		StaticMeshComponent->SetMaterial(0, MaterialInstanceDynamic);
 	}
 
-	UpdateColor();
-}
-
-void AItem::SetItemInfo(const FItemInfo& NewItemInfo)
-{
-	ItemInfo = NewItemInfo;
-
-	// C++ OnRep only triggers clients but we are Listen as Server so we have to call manually
-	OnRep_ItemInfo();
-}
-
-void AItem::SetColor(const FColor& NewColor)
-{
-	ItemInfo.ItemColor = NewColor;
-
-	// C++ OnRep only triggers clients but we are Listen as Server so we have to call manually
-	OnRep_ItemInfo();
-}
-
-void AItem::UpdateColor() const
-{
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }
 
@@ -81,7 +81,7 @@ void AItem::OnInteract_Implementation(AActor* Interactor)
 	IInteractableInterface::OnInteract_Implementation(Interactor);
 
 	ACarpenterDemoCharacter* CarpenterDemoCharacter = Cast<ACarpenterDemoCharacter>(Interactor);
-	
+
 	// Can interactor pick us up ?
 	if (CarpenterDemoCharacter->GetItem() || bPickedUp)
 	{

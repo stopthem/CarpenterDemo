@@ -72,13 +72,13 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	TArray<FOrderInfo> ActiveOrders;
 
-private:
+public:
 	UPROPERTY(BlueprintAssignable)
 	FStore_OnOrderRequested OnOrderRequested;
 
 public:
 	// Broadcast OnOrderRequested on all Clients and Server
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Nmc_BroadcastOnOrderRequested(const FOrderInfo OrderInfo);
 
 public:
@@ -117,7 +117,7 @@ private:
 
 public:
 	// Broadcast OnOrderCollected to all Clients and Server
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Nmc_BroadcastOnOrderCollected();
 
 public:
