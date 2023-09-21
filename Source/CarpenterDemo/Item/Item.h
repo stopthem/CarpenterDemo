@@ -65,9 +65,11 @@ private:
 	UMaterialInstanceDynamic* MaterialInstanceDynamic;
 
 private:
+	// Our color and shape data
 	UPROPERTY(ReplicatedUsing = OnRep_ItemInfo)
 	FItemInfo ItemInfo;
 
+	// Update color when item info changed and replicated to all instances
 	UFUNCTION()
 	void OnRep_ItemInfo();
 
@@ -89,7 +91,7 @@ private:
 
 public:
 	UFUNCTION(NetMulticast, Reliable)
-	void PickedUp();
+	void Nmc_PickedUp();
 
 public:
 	// Handles being picked up by player

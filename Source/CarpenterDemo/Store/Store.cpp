@@ -83,5 +83,5 @@ void AStore::Nmc_BroadcastOnOrderCollected_Implementation()
 void AStore::SpendBudget(const int Amount)
 {
 	CurrentBudget -= Amount;
-	CurrentBudget = FMath::Clamp(CurrentBudget, 0,INT_MAX);
+	CurrentBudget = FMath::Clamp(CurrentBudget, 0, INT_MAX);
 }

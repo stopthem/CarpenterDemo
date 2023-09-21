@@ -69,7 +69,7 @@ void AItem::UpdateColor()
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }
 
-void AItem::PickedUp_Implementation()
+void AItem::Nmc_PickedUp_Implementation()
 {
 	OnPickedUp.Broadcast();
 

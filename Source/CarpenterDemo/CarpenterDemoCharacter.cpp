@@ -117,33 +117,22 @@ void ACarpenterDemoCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
-void ACarpenterDemoCharacter::OnRep_CarriedItem() const
+bool ACarpenterDemoCharacter::Server_PickupItem_Validate(AItem* Item)
 {
-	if (!CarriedItem)
-	{
-		return;
-	}
+	return Item && !Item->IsPickedUp() && !HasItem();
+}
 
+void ACarpenterDemoCharacter::Server_PickupItem_Implementation(AItem* Item)
+{
+	CarriedItem = Item;
 	CarriedItem->AttachToComponent(ItemPickupAttachSceneComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	CarriedItem->PickedUp();
+	CarriedItem->Nmc_PickedUp();
 }
 
 void ACarpenterDemoCharacter::DeliveredItem()
 {
 	CarriedItem->Destroy();
 	CarriedItem = nullptr;
-}
-
-void ACarpenterDemoCharacter::Server_PickupItem_Implementation(AItem* Item)
-{
-	CarriedItem = Item;
-	// For server
-	OnRep_CarriedItem();
-}
-
-bool ACarpenterDemoCharacter::Server_PickupItem_Validate(AItem* Item)
-{
-	return Item && !Item->IsPickedUp() && !HasItem();
 }
 
 void ACarpenterDemoCharacter::TurnAtRate(float Rate)

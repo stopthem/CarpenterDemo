@@ -95,12 +95,8 @@ private:
 	USceneComponent* ItemPickupAttachSceneComponent = nullptr;
 
 	// Our currently carried item
-	UPROPERTY(ReplicatedUsing = OnRep_CarriedItem)
+	UPROPERTY(Replicated)
 	AItem* CarriedItem;
-
-	// Attaches item to us when its replicated
-	UFUNCTION()
-	void OnRep_CarriedItem() const;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -108,11 +104,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool HasItem() const { return CarriedItem != nullptr; }
-
-private:
-	// Resets CarriedItem and destroys it
-	UFUNCTION(BlueprintCallable)
-	void DeliveredItem();
 
 public:
 	// Called when we picked up a freshly constructed item
@@ -122,4 +113,9 @@ public:
 private:
 	UFUNCTION()
 	bool Server_PickupItem_Validate(AItem* Item);
+	
+private:
+	// Resets CarriedItem and destroys it
+	UFUNCTION(BlueprintCallable)
+	void DeliveredItem();
 };
