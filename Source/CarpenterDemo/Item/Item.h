@@ -49,6 +49,7 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
+	// Sphere component that other objects overlap to interact us 
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* SphereComponent;
 
@@ -56,13 +57,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* SceneComponent;
 
-private:
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* StaticMeshComponent;
-
-	// The material that we change the color of it
-	UPROPERTY()
-	UMaterialInstanceDynamic* MaterialInstanceDynamic;
+#pragma region Item Info
 
 private:
 	// Our color and shape data
@@ -79,15 +74,29 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetItemInfo(const FItemInfo& NewItemInfo);
+#pragma endregion
+
+#pragma region Color
+
+private:
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* StaticMeshComponent;
+
+	// Our main material that we will change its color
+	UPROPERTY()
+	UMaterialInstanceDynamic* MaterialInstanceDynamic;
 
 public:
-	// Changes ItemInfo.NewColor which causes ItemInfo OnRep
+	// Changes material color
 	UFUNCTION(BlueprintCallable)
 	void SetColor(const FColor& NewColor);
 
 private:
 	// Updates the actual material with ItemInfo
 	void UpdateColor();
+#pragma endregion
+
+#pragma region Picked Up
 
 public:
 	UFUNCTION(NetMulticast, Reliable)
@@ -107,4 +116,5 @@ public:
 	// Broadcasted when this item has been picked up
 	UPROPERTY(BlueprintAssignable)
 	FItem_OnPickedUp OnPickedUp;
+#pragma endregion
 };

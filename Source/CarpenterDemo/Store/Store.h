@@ -57,34 +57,34 @@ protected:
 	// Replicate variables
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-private:
-	UPROPERTY()
-	ACarpenterDemoGameMode* CarpenterDemoGameMode;
+#pragma region Request Order
 
 private:
-	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s"))
+	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s", ClampMin="0"))
 	float NewOrderWaitTimeMin = 2.0f;
 
-	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s"))
+	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s", ClampMin="0"))
 	float NewOrderWaitTimeMax = 4.0f;
 
 public:
+	// Currently active orders
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	TArray<FOrderInfo> ActiveOrders;
 
 private:
+	// Broadcasted when a order has been requested from server
 	UPROPERTY(BlueprintAssignable)
 	FStore_OnOrderRequested OnOrderRequested;
+
+	// Request a new random order
+	// Only executed in server instance of this actor
+	UFUNCTION()
+	void RequestOrder();
 
 public:
 	// Broadcast OnOrderRequested on all Clients and Server
 	UFUNCTION(NetMulticast, Reliable)
 	void Nmc_BroadcastOnOrderRequested(const FOrderInfo OrderInfo);
-
-public:
-	// Called when ChippingTable constructed item is picked up so we request a new order
-	UFUNCTION(BlueprintCallable)
-	void OnOrderPickedUp();
 
 private:
 	UPROPERTY(EditAnywhere, Category="Order|Orderable Items")
@@ -101,9 +101,19 @@ private:
 public:
 	UFUNCTION(BlueprintCallable)
 	TArray<UItemShapeDataAsset*> GetOrderableShapeDataAssets() { return OrderableShapeDataAssets; }
+#pragma endregion
+
+public:
+	// Called when ChippingTable constructed item is picked up so we request a new order
+	// Only executed in server instance of this actor
+	UFUNCTION(BlueprintCallable)
+	void OnConstructedItemPickedUp();
+
+#pragma region Order Collected
 
 public:
 	// Called when OrderDeliverTable collected a item locally
+	// Only executed in server instance of this actor
 	UFUNCTION(BlueprintCallable)
 	void CollectOrder(const AItem* Item);
 
@@ -119,6 +129,9 @@ public:
 	// Broadcast OnOrderCollected to all Clients and Server
 	UFUNCTION(NetMulticast, Reliable)
 	void Nmc_BroadcastOnOrderCollected();
+#pragma endregion
+
+#pragma region Budget
 
 public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
@@ -130,7 +143,8 @@ private:
 
 public:
 	// Reduce budget by Amount
-	// Only called from server actor
+	// Only executed in server instance of this actor
 	UFUNCTION(BlueprintCallable)
 	void SpendBudget(int Amount);
+#pragma endregion
 };

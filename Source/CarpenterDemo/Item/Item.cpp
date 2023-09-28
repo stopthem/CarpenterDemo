@@ -82,11 +82,18 @@ void AItem::OnInteract_Implementation(AActor* Interactor)
 
 	ACarpenterDemoCharacter* CarpenterDemoCharacter = Cast<ACarpenterDemoCharacter>(Interactor);
 
+	// If we don't have character, return
+	if (!CarpenterDemoCharacter)
+	{
+		return;
+	}
+
 	// Can interactor pick us up ?
 	if (CarpenterDemoCharacter->GetItem() || bPickedUp)
 	{
 		return;
 	}
 
+	// Server instance of the character try pick us up
 	CarpenterDemoCharacter->Server_PickupItem(this);
 }

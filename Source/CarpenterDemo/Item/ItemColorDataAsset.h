@@ -9,7 +9,7 @@
 /**
  * UItemColorDataAsset
  *
- * Holds information orderable colors
+ * Holds information about orderable colors
  */
 UCLASS(BlueprintType)
 class CARPENTERDEMO_API UItemColorDataAsset : public UDataAsset

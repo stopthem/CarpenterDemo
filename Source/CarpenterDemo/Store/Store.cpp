@@ -2,7 +2,7 @@
 
 
 #include "Store.h"
-#include "CarpenterDemo/CarpenterDemoGameMode.h"
+#include "CarpenterDemo/Item/ItemColorDataAsset.h"
 #include "Net/UnrealNetwork.h"
 
 AStore::AStore()
@@ -26,20 +26,15 @@ void AStore::BeginPlay()
 
 	CurrentBudget = StartingBudget;
 
-	// Waiting a tick because chipping table widget subscribes to request order event at begin play
-	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([&]
+	// We want to call RequestOrder() only from server actor
+	// So if not server actor, return
+	if (GetLocalRole() != ROLE_Authority)
 	{
-		AGameModeBase* GameModeBase = GetWorld()->GetAuthGameMode();
+		return;
+	}
 
-		// Only server actor has the game mode
-		if (!GameModeBase)
-		{
-			return;
-		}
-
-		CarpenterDemoGameMode = Cast<ACarpenterDemoGameMode>(GameModeBase);
-		CarpenterDemoGameMode->Store_RequestOrder(this);
-	}));
+	// Waiting a tick because there are objects that bind to OnOrderRequested at BeginPlay()
+	GetWorldTimerManager().SetTimerForNextTick(this, &AStore::RequestOrder);
 }
 
 void AStore::Nmc_BroadcastOnOrderRequested_Implementation(const FOrderInfo OrderInfo)
@@ -47,32 +42,55 @@ void AStore::Nmc_BroadcastOnOrderRequested_Implementation(const FOrderInfo Order
 	OnOrderRequested.Broadcast(OrderInfo);
 }
 
-void AStore::OnOrderPickedUp()
+void AStore::RequestOrder()
 {
-	// Create a random timed timer for next order request 
+	// Get random color data asset
+	UItemColorDataAsset* RandomColorDataAsset = OrderableColorDataAssets[FMath::RandRange(0, OrderableColorDataAssets.Num() - 1)];
+
+	// Get random shape asset
+	UItemShapeDataAsset* RandomShapeAsset = OrderableShapeDataAssets[FMath::RandRange(0, OrderableShapeDataAssets.Num() - 1)];
+
+	const FOrderInfo RequestedOrderInfo = {RandomColorDataAsset, RandomShapeAsset};
+
+	ActiveOrders.Add(RequestedOrderInfo);
+
+	// We want all clients to be notified that a order has been requested
+	Nmc_BroadcastOnOrderRequested(RequestedOrderInfo);
+}
+
+void AStore::OnConstructedItemPickedUp()
+{
 	FTimerHandle TimerHandle;
 	// We wait a random time between NewOrderWaitTimeMin and NewOrderWaitTimeMax for the next order request
-	GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]
-	{
-		// Only server actor has the game mode
-		if (!CarpenterDemoGameMode)
-		{
-			return;
-		}
-
-		CarpenterDemoGameMode->Store_RequestOrder(this);
-	}), FMath::RandRange(NewOrderWaitTimeMin, NewOrderWaitTimeMax), false);
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &AStore::RequestOrder, FMath::RandRange(NewOrderWaitTimeMin, NewOrderWaitTimeMax), false);
 }
 
 void AStore::CollectOrder(const AItem* Item)
 {
-	// Only server actor has the game mode
-	if (!CarpenterDemoGameMode)
+	int32 Reward = OrderReward;
+
+	// We want the oldest added order
+	const FOrderInfo OrderInfo = ActiveOrders[0];
+	ActiveOrders.RemoveAt(0);
+
+	const FItemInfo ItemInfo = Item->GetItemInfo();
+
+	// Notify all clients and server that a order has been collected
+	Nmc_BroadcastOnOrderCollected();
+
+	// Our shape is not the same
+	if (ItemInfo.ItemShape != OrderInfo.ItemShapeDataAsset->ItemShape)
 	{
 		return;
 	}
 
-	CarpenterDemoGameMode->Store_CollectOrder(this, Item, OrderReward);
+	// Our color is not the same
+	if (ItemInfo.ItemColor != OrderInfo.ItemColorDataAsset->Color)
+	{
+		Reward /= 2;
+	}
+
+	CurrentBudget += Reward;
 }
 
 void AStore::Nmc_BroadcastOnOrderCollected_Implementation()
