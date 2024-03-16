@@ -2,6 +2,30 @@
 
 #include "InteractableInterface.generated.h"
 
+UENUM(BlueprintType)
+enum EInputKeyActionName
+{
+	Q,
+	W,
+	E
+};
+
+USTRUCT(BlueprintType)
+struct FInteractInfo
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float time;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName name = FName("");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EInputKeyActionName> keyname;
+};
+
 UINTERFACE(MinimalAPI)
 class UInteractableInterface : public UInterface
 {

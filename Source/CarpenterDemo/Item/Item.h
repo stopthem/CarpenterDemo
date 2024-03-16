@@ -99,15 +99,18 @@ private:
 #pragma region Picked Up
 
 public:
-	UFUNCTION(NetMulticast, Reliable)
-	void Nmc_PickedUp();
+	void PickedUp();
 
 public:
 	// Handles being picked up by player
 	virtual void OnInteract_Implementation(AActor* Interactor) override;
 
 private:
+	UPROPERTY(ReplicatedUsing = OnRep_bPickedUp)
 	bool bPickedUp = false;
+
+	UFUNCTION()
+	void OnRep_bPickedUp();
 
 public:
 	bool IsPickedUp() const { return bPickedUp; }

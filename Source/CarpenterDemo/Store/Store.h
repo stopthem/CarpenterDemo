@@ -25,10 +25,10 @@ struct FOrderInfo
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Order")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Order")
 	UItemColorDataAsset* ItemColorDataAsset = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Order")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Order")
 	UItemShapeDataAsset* ItemShapeDataAsset = nullptr;
 };
 
@@ -60,16 +60,23 @@ protected:
 #pragma region Request Order
 
 private:
-	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s", ClampMin="0"))
+	UPROPERTY(EditAnywhere, Category = "Order", meta = (UIMin = "0", Units = "s", ClampMin = "0"))
 	float NewOrderWaitTimeMin = 2.0f;
 
-	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin = "0", Units="s", ClampMin="0"))
+	UPROPERTY(EditAnywhere, Category = "Order", meta = (UIMin = "0", Units = "s", ClampMin = "0"))
 	float NewOrderWaitTimeMax = 4.0f;
 
 public:
-	// Currently active orders
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	// Currently active orders. Replicated
+	UPROPERTY(ReplicatedUsing = OnRep_ActiveOrders, BlueprintReadOnly)
 	TArray<FOrderInfo> ActiveOrders;
+
+private:
+	UFUNCTION()
+	void OnRep_ActiveOrders();
+
+	// Currently locally active orders. Not replicated. Might be out of sync from server for a few frames
+	TArray<FOrderInfo> LocalActiveOrders;
 
 private:
 	// Broadcasted when a order has been requested from server
@@ -81,13 +88,8 @@ private:
 	UFUNCTION()
 	void RequestOrder();
 
-public:
-	// Broadcast OnOrderRequested on all Clients and Server
-	UFUNCTION(NetMulticast, Reliable)
-	void Nmc_BroadcastOnOrderRequested(const FOrderInfo OrderInfo);
-
 private:
-	UPROPERTY(EditAnywhere, Category="Order|Orderable Items")
+	UPROPERTY(EditAnywhere, Category = "Order|Orderable Items")
 	TArray<UItemColorDataAsset*> OrderableColorDataAssets;
 
 public:
@@ -95,7 +97,7 @@ public:
 	TArray<UItemColorDataAsset*> GetOrderableColorDataAssets() const { return OrderableColorDataAssets; }
 
 private:
-	UPROPERTY(EditAnywhere, Category="Order|Orderable Items")
+	UPROPERTY(EditAnywhere, Category = "Order|Orderable Items")
 	TArray<UItemShapeDataAsset*> OrderableShapeDataAssets;
 
 public:
@@ -118,17 +120,13 @@ public:
 	void CollectOrder(const AItem* Item);
 
 	// Reward for perfect order deliver
-	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))
+	UPROPERTY(EditAnywhere, Category = "Order", meta = (UIMin = "0"))
 	int32 OrderReward = 100;
 
 private:
 	UPROPERTY(BlueprintAssignable)
 	FStore_OnOrderCollected OnOrderCollected;
 
-public:
-	// Broadcast OnOrderCollected to all Clients and Server
-	UFUNCTION(NetMulticast, Reliable)
-	void Nmc_BroadcastOnOrderCollected();
 #pragma endregion
 
 #pragma region Budget
@@ -138,7 +136,7 @@ public:
 	int32 CurrentBudget;
 
 private:
-	UPROPERTY(EditAnywhere, Category="Order", meta=(UIMin="0"))
+	UPROPERTY(EditAnywhere, Category = "Order", meta = (UIMin = "0"))
 	int32 StartingBudget = 500;
 
 public:

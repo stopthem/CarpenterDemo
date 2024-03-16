@@ -28,7 +28,7 @@ void AStore::BeginPlay()
 
 	// We want to call RequestOrder() only from server actor
 	// So if not server actor, return
-	if (GetLocalRole() != ROLE_Authority)
+	if (!HasAuthority())
 	{
 		return;
 	}
@@ -37,9 +37,38 @@ void AStore::BeginPlay()
 	GetWorldTimerManager().SetTimerForNextTick(this, &AStore::RequestOrder);
 }
 
-void AStore::Nmc_BroadcastOnOrderRequested_Implementation(const FOrderInfo OrderInfo)
+void AStore::OnRep_ActiveOrders()
 {
-	OnOrderRequested.Broadcast(OrderInfo);
+	// Loop through ActiveOrders to find 
+	// if any of the orders doesn't exist in LocalActiveOrders meaning
+	// they are requested orders
+	for (int i = 0; i < ActiveOrders.Num(); i++)
+	{
+		const FOrderInfo OrderInfo = ActiveOrders[i];
+
+		if (LocalActiveOrders.IsValidIndex(i))
+		{
+			continue;
+		}
+
+		LocalActiveOrders.Add(OrderInfo);
+		OnOrderRequested.Broadcast(OrderInfo);
+	}
+
+	// Loop through LocalActiveOrders orders to find
+	// if any of the orders doesn't exist in ActiveOrders meaning
+	// they are collected orders
+	for (int i = 0; i < LocalActiveOrders.Num(); i++)
+	{
+		if (ActiveOrders.IsValidIndex(i))
+		{
+			continue;
+		}
+
+		OnOrderCollected.Broadcast();
+	}
+
+	LocalActiveOrders = ActiveOrders;
 }
 
 void AStore::RequestOrder()
@@ -50,12 +79,12 @@ void AStore::RequestOrder()
 	// Get random shape asset
 	UItemShapeDataAsset* RandomShapeAsset = OrderableShapeDataAssets[FMath::RandRange(0, OrderableShapeDataAssets.Num() - 1)];
 
-	const FOrderInfo RequestedOrderInfo = {RandomColorDataAsset, RandomShapeAsset};
+	const FOrderInfo RequestedOrderInfo = { RandomColorDataAsset, RandomShapeAsset };
 
 	ActiveOrders.Add(RequestedOrderInfo);
 
-	// We want all clients to be notified that a order has been requested
-	Nmc_BroadcastOnOrderRequested(RequestedOrderInfo);
+	// For server
+	OnRep_ActiveOrders();
 }
 
 void AStore::OnConstructedItemPickedUp()
@@ -73,10 +102,10 @@ void AStore::CollectOrder(const AItem* Item)
 	const FOrderInfo OrderInfo = ActiveOrders[0];
 	ActiveOrders.RemoveAt(0);
 
-	const FItemInfo ItemInfo = Item->GetItemInfo();
+	// For server
+	OnRep_ActiveOrders();
 
-	// Notify all clients and server that a order has been collected
-	Nmc_BroadcastOnOrderCollected();
+	const FItemInfo ItemInfo = Item->GetItemInfo();
 
 	// Our shape is not the same
 	if (ItemInfo.ItemShape != OrderInfo.ItemShapeDataAsset->ItemShape)
@@ -91,11 +120,6 @@ void AStore::CollectOrder(const AItem* Item)
 	}
 
 	CurrentBudget += Reward;
-}
-
-void AStore::Nmc_BroadcastOnOrderCollected_Implementation()
-{
-	OnOrderCollected.Broadcast();
 }
 
 void AStore::SpendBudget(const int Amount)

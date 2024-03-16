@@ -95,8 +95,11 @@ private:
 	USceneComponent* ItemPickupAttachSceneComponent = nullptr;
 
 	// Our currently carried item
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_CarriedItem)
 	AItem* CarriedItem;
+
+	UFUNCTION()
+	void OnRep_CarriedItem();
 
 public:
 	UFUNCTION(BlueprintCallable)

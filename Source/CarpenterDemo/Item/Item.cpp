@@ -69,11 +69,12 @@ void AItem::UpdateColor()
 	MaterialInstanceDynamic->SetVectorParameterValue("Color", ItemInfo.ItemColor);
 }
 
-void AItem::Nmc_PickedUp_Implementation()
+void AItem::PickedUp()
 {
-	OnPickedUp.Broadcast();
-
 	bPickedUp = true;
+
+	// For server
+	OnRep_bPickedUp();
 }
 
 void AItem::OnInteract_Implementation(AActor* Interactor)
@@ -96,4 +97,14 @@ void AItem::OnInteract_Implementation(AActor* Interactor)
 
 	// Server instance of the character try pick us up
 	CarpenterDemoCharacter->Server_PickupItem(this);
+}
+
+void AItem::OnRep_bPickedUp()
+{
+	if (!bPickedUp)
+	{
+		return;
+	}
+
+	OnPickedUp.Broadcast();
 }
