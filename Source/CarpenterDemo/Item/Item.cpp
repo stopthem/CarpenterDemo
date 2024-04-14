@@ -33,6 +33,8 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AItem, ItemInfo);
+
+	DOREPLIFETIME(AItem, bPickedUp);
 }
 
 void AItem::OnRep_ItemInfo()
